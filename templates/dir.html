@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<script type="text/javascript" src="{{url_for('static', filename='js/jquery.js')}}"></script>
+		<script type="text/javascript">
+			var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		</script>
+		<style>
+			.dirspan{
+				cursor:pointer;
+				text-decoration:underline;
+				color:blue
+			}
+			.filename{
+				width:150px
+			}
+			.filepath{
+				width:300px
+			}
+			.tdcancel{
+				cursor:pointer;
+				color:#666666
+			}
+			.tdcancel{font-size:18px}
+			</style>
+	</head>
+<body>
+<div style='width:900px; margin:50px auto'>
+	<div style='float:left;width:400px;padding-bottom:100px'>
+		<p>please select files</p>
+		<p>current dir at <span id='spancurdir'>{{cur_dir}}</span></p>
+		<div id='dirlist' method="post" action="">
+			{% for dir in dirs %}
+			<p>
+			{% if dir[0] == 'dir' %}
+			<span class='dirspan'>{{dir[1]}}</span>
+			{% else %}
+			<input type="checkbox" name='filename' value={{dir[1]}} />{{dir[1]}}<br />
+			{% endif %}
+			</p>
+			{% endfor %}
+		</div>
+		<div><button id='selbtn'>select files</button></div>
+	</div>
+	<div style='float:left;width:500px'>
+		<p>file selected</p>
+		<table>
+		<tbody id='filelist' method="post" action="">
+		{% for file in files %}
+		<tr>
+		<td class='filename'>{{file.name}}</td><td class='filepath'>{{file.path}}</td><td class='tdcancel'>x</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+		<div style='margin-top:20px'><button id='selbtn'>submit tables</button></div>		
+	</div>
+</div>
+</body>
+<script>
+function UpdateFile(list)
+{
+	$("#filelist").html("");
+	for(var i = 0; i < list['files'].length; i++)
+	{
+		$("#filelist").append("<tr><td class='filename'>"+list['files'][i]+"</td><td class='filepath'>"+list['filepaths'][i]+"</td><td class='tdcancel'>x</td></tr>");
+	}
+	tdinit();
+}
+function tdinit()
+{
+	$(".tdcancel").mouseenter(function(){
+		$(this).css("opacity",0.5);
+	});
+	$(".tdcancel").mouseleave(function(){
+		$(this).css("opacity",1);
+	});
+	$(".tdcancel").click(function(){
+		data = {"filepaths":$(this).prev().html()};
+		$.ajax({
+			type: "POST",
+			url: SCRIPT_ROOT + '/deletetable',
+			data: JSON.stringify(data),
+			contentType: 'application/json;charset=UTF-8',
+			success:function(data)
+			{
+				UpdateFile(data);
+			}
+		});
+	});		
+}
+function UpdateDir(newdir)
+{
+	$.get(
+		SCRIPT_ROOT + '/managefile',
+		{
+			cur_dir:newdir
+		},
+		function(data)
+		{
+			$("#dirlist").html("");
+			list = data.x;
+			for(var i = 0; i < list.length; i++)
+			{
+				if(list[i][0] == 'dir')
+				{
+					$("#dirlist").append("<p><span onclick='UpdateDir(this.innerHTML)' class='dirspan'>"+list[i][1]+"</span></p>");
+				}
+				else
+				{
+					$("#dirlist").append("<p><input type='checkbox' name='filename' value='"+ list[i][1] +"'/>"+list[i][1]+"</p>");
+				}
+			}
+			$("#spancurdir").html(data.y);
+		}
+	);	
+}
+$(document).ready(function(){
+	$(".dirspan").click(function(){
+		UpdateDir($(this).html());
+	});
+	$("#selbtn").click(function(){
+		var files = new Array();
+		var filepaths = new Array();
+		$("#dirlist input").each(function(){
+			if($(this).prop("checked"))
+			{
+				files.push($(this).val());
+				var path = $("#spancurdir").html() + "\\" + $(this).val();
+				filepaths.push(path);
+			}
+		});
+		data = {"files":files,"filepaths":filepaths};
+		$.ajax({
+			type: "POST",
+			url: SCRIPT_ROOT + '/managefile',
+			data: JSON.stringify(data),
+			contentType: 'application/json;charset=UTF-8',
+			success:function(data)
+			{
+				UpdateFile(data);
+			}
+		});
+	});
+	tdinit();
+});
+</script>
+</html>
