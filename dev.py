@@ -8,7 +8,7 @@ app.config['SECRET_KEY'] = os.urandom(24)
 @app.route('/', methods=['GET'])
 def index():
     if not 'cur_dir' in session.keys():
-        session['cur_dir'] = os.getcwd()
+        session['cur_dir'] = os.getcwd().decode('utf-8')
     if not 'tables' in session.keys():    
         session['tables'] = []
         session['tablepaths'] = []       
