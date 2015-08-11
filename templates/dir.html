@@ -53,7 +53,7 @@
 		{% endfor %}
 		</tbody>
 		</table>
-		<div style='margin-top:20px'><button id='selbtn'>submit tables</button></div>		
+		<div style='margin-top:20px'><button id='submitbtn'>submit tables</button></div>		
 	</div>
 </div>
 </body>
@@ -143,6 +143,9 @@ $(document).ready(function(){
 		});
 	});
 	tdinit();
+	$("#submitbtn").click(function(){
+		window.location.href="/main";
+	});
 });
 </script>
 </html>
